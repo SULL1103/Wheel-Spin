@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Wheel Spin</title>
+  <style>
+    :root{
+      --bg:#f3f6ff;
+      --card:#ffffff;
+      --muted:#6b7280;
+      --text:#0b0c10;
+      --line:rgba(2,6,23,.12);
+      --btn:#111827;
+      --btnText:#ffffff;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: var(--bg);
+      color:var(--text);
+    }
+    header{
+      padding:16px;
+      text-align:center;
+      border-bottom:1px solid var(--line)
+    }
+    h1{margin:0;font-size:18px}
+
+    .wrap{padding:16px;display:grid;place-items:center}
+    .card{
+      width:100%;
+      max-width:420px;
+      background: var(--card);
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:16px;
+      box-shadow:0 10px 30px rgba(0,0,0,.08);
+      display:grid;
+      gap:12px;
+      justify-items:center;
+    }
+
+    canvas{width:100%;aspect-ratio:1/1}
+
+    .slotBox{
+      width:100%;
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:12px;
+      background:linear-gradient(180deg, rgba(0,0,0,.03), rgba(0,0,0,.02));
+      display:grid;
+      place-items:center;
+      overflow:hidden;
+    }
+    .slotResult{
+      font-size:22px;
+      font-weight:900;
+      letter-spacing:.6px;
+      min-height:28px;
+      transition:transform 70ms ease, opacity 70ms ease;
+    }
+    .slotTick{
+      transform:translateY(2px);
+      opacity:.92;
+    }
+
+    .btnRow{
+      width:100%;
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+    }
+    button{
+      border:0;
+      border-radius:16px;
+      padding:14px;
+      font-weight:800;
+      font-size:15px;
+      cursor:pointer;
+    }
+    .primary{background:var(--btn);color:var(--btnText)}
+    .ghost{
+      background:rgba(17,24,39,.06);
+      color:var(--text);
+      border:1px solid var(--line)
+    }
+    button:disabled{opacity:.55;cursor:not-allowed}
+  </style>
+</head>
+<body>
+
+<header><h1>Wheel Spin</h1></header>
+
+<main class="wrap">
+  <section class="card">
+    <canvas id="wheel" width="360" height="360"></canvas>
+
+    <div class="slotBox">
+      <div class="slotResult" id="result">—</div>
+    </div>
+
+    <div class="btnRow">
+      <button class="primary" id="spinBtn">SPIN</button>
+      <button class="ghost" id="resetBtn">Reset</button>
+    </div>
+  </section>
+</main>
+
+<script>
+(() => {
+  const items = [
+    { label:"500.000", weight:1 },
+    { label:"Coba Lagi", weight:10 },
+    { label:"250.000", weight:1 },
+    { label:"Coba Lagi", weight:10 },
+    { label:"100.000", weight:20 },
+    { label:"50.000",  weight:25 },
+    { label:"25.000",  weight:8 },
+    { label:"Coba Lagi", weight:10 },
+  ];
+
+  const MIN_DURATION = 5000;
+  const MAX_DURATION = 10000;
+  const TWO_PI = Math.PI * 2;
+
+  const clamp0 = v => Math.max(0, Number(v) || 0);
+  const norm = a => ((a % TWO_PI) + TWO_PI) % TWO_PI;
+
+  function totalWeight(){
+    return items.reduce((s,x)=>s+clamp0(x.weight),0);
+  }
+
+  function weightedPickIndex(){
+    let r = Math.random() * totalWeight();
+    for(let i=0;i<items.length;i++){
+      r -= clamp0(items[i].weight);
+      if(r < 0) return i;
+    }
+    return 0;
+  }
+
+  const canvas = document.getElementById("wheel");
+  const ctx = canvas.getContext("2d");
+  const spinBtn = document.getElementById("spinBtn");
+  const resetBtn = document.getElementById("resetBtn");
+  const resultEl = document.getElementById("result");
+
+  const cx = canvas.width/2, cy = canvas.height/2, radius = 160;
+  let rotation = 0;
+  let spinning = false;
+  let lastIdx = -1;
+
+  function showResult(idx){
+    if(idx === lastIdx) return;
+    lastIdx = idx;
+    resultEl.textContent = items[idx]?.label ?? "—";
+    resultEl.classList.add("slotTick");
+    requestAnimationFrame(()=>resultEl.classList.remove("slotTick"));
+  }
+
+  function sliceColor(i){
+    const hues=[10,45,95,150,205,255,305];
+    return `hsl(${hues[i%hues.length]} 78% 58%)`;
+  }
+
+  function drawPointer(){
+    ctx.save();
+    ctx.translate(cx,cy);
+    ctx.beginPath();
+    ctx.moveTo(0,-radius-6);
+    ctx.lineTo(-12,-radius-28);
+    ctx.lineTo(12,-radius-28);
+    ctx.closePath();
+    ctx.fillStyle="#111827";
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawWheel(rot=0){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    const n = items.length;
+    const slice = TWO_PI/n;
+    let start = -Math.PI/2 + rot;
+
+    ctx.save();
+    ctx.translate(cx,cy);
+
+    for(let i=0;i<n;i++){
+      ctx.beginPath();
+      ctx.moveTo(0,0);
+      ctx.arc(0,0,radius,start,start+slice);
+      ctx.closePath();
+      ctx.fillStyle=sliceColor(i);
+      ctx.fill();
+
+      const mid=start+slice/2;
+      ctx.save();
+      ctx.rotate(mid);
+      ctx.textAlign="right";
+      ctx.fillStyle="#0b0c10";
+      ctx.font="900 13px system-ui";
+      ctx.fillText(items[i].label, radius-12,5);
+      ctx.restore();
+
+      start+=slice;
+    }
+
+    ctx.beginPath();
+    ctx.arc(0,0,radius,0,TWO_PI);
+    ctx.strokeStyle="rgba(2,6,23,.2)";
+    ctx.lineWidth=2;
+    ctx.stroke();
+
+    ctx.restore();
+    drawPointer();
+  }
+
+  function easeOut(t){return 1-Math.pow(1-t,3)}
+
+  function durationFor(idx){
+    const ws = items.map(i=>clamp0(i.weight));
+    const min=Math.min(...ws), max=Math.max(...ws);
+    if(min===max) return (MIN_DURATION+MAX_DURATION)/2;
+    const r=(clamp0(items[idx].weight)-min)/(max-min);
+    return MAX_DURATION - r*(MAX_DURATION-MIN_DURATION);
+  }
+
+  function indexUnderPointer(rot){
+    const slice=TWO_PI/items.length;
+    return Math.floor(norm(-rot)/slice);
+  }
+
+  function desiredMod(idx){
+    const slice=TWO_PI/items.length;
+    return norm(-(idx+0.5)*slice);
+  }
+
+  function spinTo(idx){
+    const dur=durationFor(idx);
+    const turns=10;
+    const cur=norm(rotation);
+    const want=desiredMod(idx);
+    let delta=want-cur;
+    if(delta<0) delta+=TWO_PI;
+    animate(rotation+turns*TWO_PI+delta,dur);
+  }
+
+  function animate(target,duration){
+    spinning=true;
+    spinBtn.disabled=true;
+
+    showResult(indexUnderPointer(rotation));
+
+    const start=rotation;
+    const delta=target-start;
+    const t0=performance.now();
+
+    function frame(now){
+      const t=Math.min(1,(now-t0)/duration);
+      rotation=start+delta*easeOut(t);
+      drawWheel(rotation);
+      showResult(indexUnderPointer(rotation));
+      if(t<1){
+        requestAnimationFrame(frame);
+      }else{
+        rotation=target;
+        drawWheel(rotation);
+        showResult(indexUnderPointer(rotation));
+        spinning=false;
+        spinBtn.disabled=false;
+      }
+    }
+    requestAnimationFrame(frame);
+  }
+
+  spinBtn.onclick=()=>{
+    if(spinning||totalWeight()<=0) return;
+    spinTo(weightedPickIndex());
+  };
+
+  resetBtn.onclick=()=>{
+    spinning=false;
+    rotation=0;
+    lastIdx=-1;
+    drawWheel(0);
+    resultEl.textContent="—";
+  };
+
+  drawWheel(0);
+})();
+</script>
+
+</body>
+</html>
