@@ -6,291 +6,278 @@
   <title>Wheel Spin</title>
   <style>
     :root{
-      --bg:#f3f6ff;
-      --card:#ffffff;
-      --muted:#6b7280;
-      --text:#0b0c10;
-      --line:rgba(2,6,23,.12);
-      --btn:#111827;
-      --btnText:#ffffff;
+      --bg:#f3f6ff; --card:#ffffff; --muted:#6b7280; --text:#0b0c10;
+      --line:rgba(2,6,23,.12); --btn:#111827; --btnText:#ffffff;
+      --accent: #4f46e5; --success: #10b981; --danger: #ef4444;
     }
     *{box-sizing:border-box}
     body{
-      margin:0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      background: var(--bg);
-      color:var(--text);
+      margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: var(--bg); color:var(--text); overflow-x: hidden;
     }
     header{
-      padding:16px;
-      text-align:center;
-      border-bottom:1px solid var(--line)
+      padding:16px; text-align:center; border-bottom:1px solid var(--line);
+      position: relative; display: flex; justify-content: center;
+      align-items: center; background: white;
     }
-    h1{margin:0;font-size:18px}
-
+    h1{margin:0;font-size:18px; flex-grow: 1;}
+    .menu-container { position: absolute; right: 16px; }
+    .settings-trigger {
+      background: none; border: none; font-size: 24px; cursor: pointer;
+      padding: 4px 8px; border-radius: 8px; display: flex;
+      align-items: center; justify-content: center; color: var(--text);
+    }
+    .dropdown-menu {
+      display: none; position: absolute; right: 0; top: 110%;
+      background: var(--card); border: 1px solid var(--line);
+      border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      overflow: hidden; z-index: 50; min-width: 160px;
+    }
+    .dropdown-menu.show { display: block; }
+    .dropdown-menu button {
+      width: 100%; text-align: left; padding: 12px 16px;
+      background: none; border: none; font-size: 14px;
+      color: var(--text); font-weight: 500; cursor: pointer;
+    }
+    .dropdown-menu button:hover { background: rgba(0,0,0,0.05); }
     .wrap{padding:16px;display:grid;place-items:center}
     .card{
-      width:100%;
-      max-width:420px;
-      background: var(--card);
-      border:1px solid var(--line);
-      border-radius:18px;
-      padding:16px;
-      box-shadow:0 10px 30px rgba(0,0,0,.08);
-      display:grid;
-      gap:12px;
-      justify-items:center;
+      width:100%; max-width:420px; background: var(--card);
+      border:1px solid var(--line); border-radius:18px;
+      padding:16px; box-shadow:0 10px 30px rgba(0,0,0,.08);
+      display:grid; gap:12px; justify-items:center;
     }
-
     canvas{width:100%;aspect-ratio:1/1}
-
     .slotBox{
-      width:100%;
-      border:1px solid var(--line);
-      border-radius:16px;
-      padding:12px;
-      background:linear-gradient(180deg, rgba(0,0,0,.03), rgba(0,0,0,.02));
-      display:grid;
-      place-items:center;
-      overflow:hidden;
+      width:100%; border:1px solid var(--line); border-radius:16px;
+      padding:12px; background:linear-gradient(180deg, rgba(0,0,0,.03), rgba(0,0,0,.02));
+      display:grid; place-items:center; overflow:hidden;
     }
-    .slotResult{
-      font-size:22px;
-      font-weight:900;
-      letter-spacing:.6px;
-      min-height:28px;
-      transition:transform 70ms ease, opacity 70ms ease;
-    }
-    .slotTick{
-      transform:translateY(2px);
-      opacity:.92;
-    }
-
-    .btnRow{
-      width:100%;
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:10px;
-    }
-    button{
-      border:0;
-      border-radius:16px;
-      padding:14px;
-      font-weight:800;
-      font-size:15px;
-      cursor:pointer;
+    .slotResult{ font-size:22px; font-weight:900; min-height:28px; }
+    .btnRow{ width:100%; display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    button.action-btn {
+      border:0; border-radius:16px; padding:14px;
+      font-weight:800; font-size:15px; cursor:pointer;
     }
     .primary{background:var(--btn);color:var(--btnText)}
-    .ghost{
-      background:rgba(17,24,39,.06);
-      color:var(--text);
-      border:1px solid var(--line)
+    .ghost{ background:rgba(17,24,39,.06); color:var(--text); border:1px solid var(--line) }
+    .overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5); display: none; z-index: 100;
+      padding: 20px; align-items: center; justify-content: center;
     }
-    button:disabled{opacity:.55;cursor:not-allowed}
+    .modal-card {
+      background: white; width: 100%; max-width: 500px;
+      max-height: 85vh; border-radius: 20px; padding: 24px;
+      position: relative; display: flex; flex-direction: column;
+    }
+    .modal-content-scroll { flex: 1; overflow-y: auto; margin: 16px 0; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--line); }
+    .btn-admin {
+        border: 0; border-radius: 12px; padding: 12px;
+        font-weight: 700; cursor: pointer; color: white;
+        width: 100%; font-size: 14px; margin-bottom: 8px;
+    }
+    .btn-add { background: var(--success); }
+    .btn-save { background: var(--accent); }
+    .btn-excel { background: #1d6f42; }
+    .btn-clear { background: var(--danger); }
+    .btn-reset-default { background: #6366f1; }
+    .close-modal { position: absolute; right: 20px; top: 20px; font-size: 24px; color: var(--muted); text-decoration: none; }
+    input { padding: 10px; border: 1px solid var(--line); border-radius: 8px; width: 100%; }
+    .item-row { display: grid; grid-template-columns: 1fr 80px 40px; gap: 8px; margin-bottom: 10px; }
   </style>
 </head>
 <body>
 
-<header><h1>Wheel Spin</h1></header>
+<header>
+  <h1>Wheel Spin</h1>
+  <div class="menu-container">
+      <button class="settings-trigger" id="menuBtn">⋮</button>
+      <div class="dropdown-menu" id="dropdownMenu">
+          <button id="openAdminActionBtn">Edit Item</button>
+          <button id="openHistoryActionBtn">Riwayat Spin</button>
+      </div>
+  </div>
+</header>
 
 <main class="wrap">
   <section class="card">
     <canvas id="wheel" width="360" height="360"></canvas>
-
     <div class="slotBox">
       <div class="slotResult" id="result">—</div>
     </div>
-
     <div class="btnRow">
-      <button class="primary" id="spinBtn">SPIN</button>
-      <button class="ghost" id="resetBtn">Reset</button>
+      <button class="action-btn primary" id="spinBtn">SPIN</button>
+      <button class="action-btn ghost" id="resetBtn">Reset</button>
     </div>
   </section>
 </main>
 
+<div id="adminPanel" class="overlay">
+  <div class="modal-card">
+    <a href="#" class="close-modal" id="closeAdminBtn">&times;</a>
+    <h2>Edit Item</h2>
+    <div class="modal-content-scroll"><div id="itemsContainer"></div></div>
+    <div class="admin-footer">
+        <button class="btn-admin btn-add" id="addItemBtn">+ Tambah Item</button>
+        <button class="btn-admin btn-save" id="saveAdminBtn">Simpan Perubahan</button>
+        <button class="btn-admin btn-reset-default" id="resetToDefaultBtn">Reset ke Setelan Awal</button>
+    </div>
+  </div>
+</div>
+
+<div id="historyPanel" class="overlay">
+    <div class="modal-card">
+      <a href="#" class="close-modal" id="closeHistoryBtn">&times;</a>
+      <h2>Riwayat Spin</h2>
+      <div class="modal-content-scroll">
+        <table id="historyTable">
+            <thead><tr><th>Waktu</th><th>Hasil</th></tr></thead>
+            <tbody id="historyBody"></tbody>
+        </table>
+      </div>
+      <div class="admin-footer">
+          <button class="btn-admin btn-excel" id="downloadExcelBtn">Download Excel (.xls)</button>
+          <button class="btn-admin btn-clear" id="clearHistoryBtn">Hapus Semua Riwayat</button>
+      </div>
+    </div>
+</div>
+
 <script>
 (() => {
-  const items = [
-    { label:"500.000", weight:1 },
-    { label:"Coba Lagi", weight:10 },
-    { label:"250.000", weight:1 },
-    { label:"Coba Lagi", weight:10 },
-    { label:"100.000", weight:20 },
-    { label:"50.000",  weight:25 },
-    { label:"25.000",  weight:8 },
-    { label:"Coba Lagi", weight:10 },
+  // Data default jika belum ada di storage
+  const _0x_def = [
+    { label:"500.000", weight:1 }, { label:"Coba Lagi", weight:10 },
+    { label:"250.000", weight:1 }, { label:"100.000", weight:20 },
+    { label:"50.000",  weight:25 }, { label:"25.000",  weight:5 }
   ];
 
-  const MIN_DURATION = 5000;
-  const MAX_DURATION = 10000;
+  const _0x_key = "YWRtaW5nYW50ZW5n"; 
+
+  // Fungsi pengecek password sederhana yang kompatibel di semua browser
+  const _0x_vld = (input) => {
+    try { return btoa(input) === _0x_key; } catch(e) { return false; }
+  };
+
+  let items = JSON.parse(localStorage.getItem('wheelItems')) || JSON.parse(JSON.stringify(_0x_def));
+  let history = JSON.parse(localStorage.getItem('wheelHistory')) || [];
+  
   const TWO_PI = Math.PI * 2;
+  const canvas = document.getElementById("wheel"), ctx = canvas.getContext("2d");
+  const resultEl = document.getElementById("result"), spinBtn = document.getElementById("spinBtn");
+  const adminPanel = document.getElementById("adminPanel"), historyPanel = document.getElementById("historyPanel");
 
-  const clamp0 = v => Math.max(0, Number(v) || 0);
-  const norm = a => ((a % TWO_PI) + TWO_PI) % TWO_PI;
+  let rotation = 0, spinning = false;
 
-  function totalWeight(){
-    return items.reduce((s,x)=>s+clamp0(x.weight),0);
-  }
-
-  function weightedPickIndex(){
-    let r = Math.random() * totalWeight();
-    for(let i=0;i<items.length;i++){
-      r -= clamp0(items[i].weight);
-      if(r < 0) return i;
-    }
-    return 0;
-  }
-
-  const canvas = document.getElementById("wheel");
-  const ctx = canvas.getContext("2d");
-  const spinBtn = document.getElementById("spinBtn");
-  const resetBtn = document.getElementById("resetBtn");
-  const resultEl = document.getElementById("result");
-
-  const cx = canvas.width/2, cy = canvas.height/2, radius = 160;
-  let rotation = 0;
-  let spinning = false;
-  let lastIdx = -1;
-
-  function showResult(idx){
-    if(idx === lastIdx) return;
-    lastIdx = idx;
-    resultEl.textContent = items[idx]?.label ?? "—";
-    resultEl.classList.add("slotTick");
-    requestAnimationFrame(()=>resultEl.classList.remove("slotTick"));
-  }
-
-  function sliceColor(i){
-    const hues=[10,45,95,150,205,255,305];
-    return `hsl(${hues[i%hues.length]} 78% 58%)`;
-  }
-
-  function drawPointer(){
-    ctx.save();
-    ctx.translate(cx,cy);
-    ctx.beginPath();
-    ctx.moveTo(0,-radius-6);
-    ctx.lineTo(-12,-radius-28);
-    ctx.lineTo(12,-radius-28);
-    ctx.closePath();
-    ctx.fillStyle="#111827";
-    ctx.fill();
-    ctx.restore();
+  // --- Fungsi Utama ---
+  function saveHistory(label) {
+    const entry = { time: new Date().toLocaleString('id-ID'), result: label };
+    history.unshift(entry);
+    if(history.length > 100) history.pop();
+    localStorage.setItem('wheelHistory', JSON.stringify(history));
   }
 
   function drawWheel(rot=0){
     ctx.clearRect(0,0,canvas.width,canvas.height);
-    const n = items.length;
-    const slice = TWO_PI/n;
+    const n = items.length; if(n === 0) return;
+    const slice = TWO_PI/n, radius = 160, cx = 180, cy = 180;
     let start = -Math.PI/2 + rot;
-
-    ctx.save();
-    ctx.translate(cx,cy);
-
     for(let i=0;i<n;i++){
-      ctx.beginPath();
-      ctx.moveTo(0,0);
-      ctx.arc(0,0,radius,start,start+slice);
-      ctx.closePath();
-      ctx.fillStyle=sliceColor(i);
-      ctx.fill();
-
-      const mid=start+slice/2;
-      ctx.save();
-      ctx.rotate(mid);
-      ctx.textAlign="right";
-      ctx.fillStyle="#0b0c10";
-      ctx.font="900 13px system-ui";
-      ctx.fillText(items[i].label, radius-12,5);
-      ctx.restore();
-
-      start+=slice;
+      ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,radius,start,start+slice);
+      ctx.fillStyle = `hsl(${(i * 360/n)}, 70%, 60%)`; ctx.fill(); ctx.save();
+      ctx.translate(cx,cy); ctx.rotate(start + slice/2);
+      ctx.textAlign="right"; ctx.fillStyle="#fff"; ctx.font="bold 14px sans-serif";
+      ctx.fillText(items[i].label, radius-10, 5); ctx.restore(); start += slice;
     }
-
-    ctx.beginPath();
-    ctx.arc(0,0,radius,0,TWO_PI);
-    ctx.strokeStyle="rgba(2,6,23,.2)";
-    ctx.lineWidth=2;
-    ctx.stroke();
-
-    ctx.restore();
-    drawPointer();
-  }
-
-  function easeOut(t){return 1-Math.pow(1-t,3)}
-
-  function durationFor(idx){
-    const ws = items.map(i=>clamp0(i.weight));
-    const min=Math.min(...ws), max=Math.max(...ws);
-    if(min===max) return (MIN_DURATION+MAX_DURATION)/2;
-    const r=(clamp0(items[idx].weight)-min)/(max-min);
-    return MAX_DURATION - r*(MAX_DURATION-MIN_DURATION);
-  }
-
-  function indexUnderPointer(rot){
-    const slice=TWO_PI/items.length;
-    return Math.floor(norm(-rot)/slice);
-  }
-
-  function desiredMod(idx){
-    const slice=TWO_PI/items.length;
-    return norm(-(idx+0.5)*slice);
+    ctx.fillStyle = "#333"; ctx.beginPath(); ctx.moveTo(cx-10, 10); ctx.lineTo(cx+10, 10); ctx.lineTo(cx, 30); ctx.fill();
   }
 
   function spinTo(idx){
-    const dur=durationFor(idx);
-    const turns=10;
-    const cur=norm(rotation);
-    const want=desiredMod(idx);
-    let delta=want-cur;
-    if(delta<0) delta+=TWO_PI;
-    animate(rotation+turns*TWO_PI+delta,dur);
-  }
-
-  function animate(target,duration){
-    spinning=true;
-    spinBtn.disabled=true;
-
-    showResult(indexUnderPointer(rotation));
-
-    const start=rotation;
-    const delta=target-start;
-    const t0=performance.now();
-
-    function frame(now){
-      const t=Math.min(1,(now-t0)/duration);
-      rotation=start+delta*easeOut(t);
-      drawWheel(rotation);
-      showResult(indexUnderPointer(rotation));
-      if(t<1){
-        requestAnimationFrame(frame);
-      }else{
-        rotation=target;
-        drawWheel(rotation);
-        showResult(indexUnderPointer(rotation));
-        spinning=false;
-        spinBtn.disabled=false;
-      }
+    spinning = true; spinBtn.disabled = true;
+    const turns = 8, slice = TWO_PI/items.length;
+    const targetRot = rotation + (turns * TWO_PI) + (TWO_PI - ((idx + 0.5) * slice + rotation % TWO_PI)) % TWO_PI;
+    const startT = performance.now(), duration = 5000;
+    function animate(now){
+      let t = Math.min((now - startT)/duration, 1);
+      let curRot = rotation + (targetRot - rotation) * (1 - Math.pow(1 - t, 3));
+      drawWheel(curRot);
+      if(t < 1) requestAnimationFrame(animate);
+      else { rotation = curRot; spinning = false; spinBtn.disabled = false; resultEl.textContent = items[idx].label; saveHistory(items[idx].label); }
     }
-    requestAnimationFrame(frame);
+    requestAnimationFrame(animate);
   }
 
-  spinBtn.onclick=()=>{
-    if(spinning||totalWeight()<=0) return;
-    spinTo(weightedPickIndex());
+  // --- Logika Panel Admin ---
+  document.getElementById("openAdminActionBtn").onclick = () => {
+    const input = prompt("Masukkan Password:");
+    if(!input) return;
+    
+    // Menggunakan fungsi vld yang baru
+    if(_0x_vld(input)) { 
+        renderAdmin(); 
+        adminPanel.style.display = 'flex'; 
+    } else { 
+        alert("Password salah!"); 
+    }
   };
 
-  resetBtn.onclick=()=>{
-    spinning=false;
-    rotation=0;
-    lastIdx=-1;
-    drawWheel(0);
-    resultEl.textContent="—";
+  document.getElementById("resetToDefaultBtn").onclick = () => {
+{
+        items = JSON.parse(JSON.stringify(_0x_def));
+        localStorage.setItem('wheelItems', JSON.stringify(items));
+        renderAdmin(); drawWheel(0);
+    }
   };
 
+  function renderAdmin() {
+    document.getElementById("itemsContainer").innerHTML = items.map((it, i) => `
+        <div class="item-row">
+            <input type="text" value="${it.label}" class="ed-l">
+            <input type="number" value="${it.weight}" class="ed-w">
+            <button onclick="removeItem(${i})" style="background:red; color:white; border:none; border-radius:5px">✕</button>
+        </div>`).join('');
+  }
+
+  window.removeItem = (i) => { items.splice(i, 1); renderAdmin(); };
+  document.getElementById("addItemBtn").onclick = () => { items.push({label: "Baru", weight: 1}); renderAdmin(); };
+  document.getElementById("saveAdminBtn").onclick = () => {
+    const ls = document.querySelectorAll('.ed-l'), ws = document.querySelectorAll('.ed-w');
+    items = Array.from(ls).map((el, i) => ({ label: el.value, weight: parseInt(ws[i].value) || 1 }));
+    localStorage.setItem('wheelItems', JSON.stringify(items));
+    adminPanel.style.display = 'none'; rotation = 0; drawWheel(0); alert("Perubahan disimpan!");
+  };
+
+  // --- Riwayat & Download ---
+  document.getElementById("downloadExcelBtn").onclick = () => {
+    if(history.length === 0) return alert("Riwayat kosong!");
+    let csv = "data:application/vnd.ms-excel;charset=utf-8,Waktu\tHasil\n";
+    history.forEach(r => csv += `${r.time}\t${r.result}\n`);
+    const link = document.createElement("a");
+    link.href = encodeURI(csv); link.download = `History_${Date.now()}.xls`;
+    link.click();
+  };
+
+  document.getElementById("menuBtn").onclick = (e) => { e.stopPropagation(); document.getElementById("dropdownMenu").classList.toggle('show'); };
+  window.onclick = () => document.getElementById("dropdownMenu").classList.remove('show');
+  document.getElementById("openHistoryActionBtn").onclick = () => { 
+    document.getElementById("historyBody").innerHTML = history.map(h => `<tr><td>${h.time}</td><td><b>${h.result}</b></td></tr>`).join('');
+    historyPanel.style.display = 'flex'; 
+  };
+  document.getElementById("clearHistoryBtn").onclick = () => {{ history = []; localStorage.removeItem('wheelHistory'); historyPanel.style.display='none'; }};
+  document.getElementById("closeAdminBtn").onclick = () => adminPanel.style.display = 'none';
+  document.getElementById("closeHistoryBtn").onclick = () => historyPanel.style.display = 'none';
+
+  spinBtn.onclick = () => {
+    if(spinning || items.length === 0) return;
+    const totalW = items.reduce((s, x) => s + x.weight, 0);
+    let r = Math.random() * totalW;
+    for(let i=0; i<items.length; i++) { r -= items[i].weight; if(r <= 0) { spinTo(i); break; } }
+  };
+  document.getElementById("resetBtn").onclick = () => { if(!spinning) { rotation = 0; resultEl.textContent = "—"; drawWheel(0); }};
   drawWheel(0);
 })();
 </script>
-
 </body>
 </html>
